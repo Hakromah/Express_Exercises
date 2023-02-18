@@ -1,88 +1,94 @@
 import { Request, Response } from 'express';
-import Joi from "Joi"
+import joi from 'joi';
+import pgPromise from 'pg-promise'
+
+// connection to the pgAdmin database
+const db = pgPromise()('postgres://postgres:postgres@localhost:5432/db_exercise')
+console.log(db);
 
 
-type Planet = {
-	id: number;
-	name: string;
-};
+//CRETING PLANET TABLE
+const setupDb = async () => {
+	await db.none(`
+	DROP TABLE IF EXISTS planets;
 
-type Planets = Planet[];
+	CREATE TABLE planets (
+		id SERIAL NOT NULL PRIMARY KEY,
+		name TEXT NOT NULL,
+		image TEXT
+	)`)
 
-let planets: Planets = [
-	{ id: 1, name: 'Earth' },
-	{ id: 2, name: 'Mars' },
-	{ id: 3, name: 'Moon' },
-];
+	await db.none(`INSERT INTO planets (name) VALUES ('Earth')`)
+	await db.none(`INSERT INTO planets (name) VALUES ('Mars')`)
+}
+setupDb()
 
-// app.get('/api/planets', (req:Request, res) => {
-//   res.status(200).json(planets)
-// });
 
-// app.get("/api/planets/:id", (req:Request, res) =>{
-//    const {id} = req:Request.params;
-//    const planet = planets.find(p => p.id === Number(id))
-
-//    res.status(200).json(planet)
-// });
-
-const getAll = (req: Request, res: Response) => {
+const getAll = async (req: Request, res: Response) => {
+	const planets = await db.many(`SELECT * FROM planets`)
 	res.status(200).json(planets);
 };
 
-//!GET USER
-const getUser = (req: Request, res: Response) => {
+const getOneById = async (req: Request, res: Response) => {
 	const { id } = req.params;
-	let planet = planets.find((p) => p.id === Number(id));
+	let planet = await db.oneOrNone(`SELECT * FROM planets WHERE id=$1`, Number(id))
 	res.status(200).json(planet);
 };
 
-//todo  VALIDATION
+//todo validation with (joi)
 
-const planetSchema = Joi.object({
-   id: Joi.number().integer().required(),
-   name: Joi.string().required()
+const planetSchema = joi.object({
+	id: joi.number().integer().required(),
+	name: joi.string().required(),
 });
 
-//! POST PLANET
-const getPost = (req: Request, res: Response) => {
-	// const {id, name} = req:Request.body;
-	const { name } = req.body; //? create id automatically
-	// let id = planets[planets.length-1].id +1
-	const id = Math.floor(Math.random() * 100);
-	const newPlanet: Planet = { id, name };
+// POST PLANET
+const create = async (req: Request, res: Response) => {
+	const { name } = req.body;
+	//let id = planets [planets.length -1] +1 //another way to generate ID
+	let id = Math.floor(Math.random() * 100);
+	const newValue = { id, name };
 
-
-   const validateNewPlanet = planetSchema.validate(newPlanet);//! validation
-
-   if(validateNewPlanet.error) {
-      return res.status(400).json({msg: validateNewPlanet.error})
-   }else{
-   planets = [...planets, newPlanet];
-   res.status(201).json({ msg: 'Planet was greated.' });
-   }
-
-	// planets = [...planets, newPlanet];
-   // res.status(201).json({ msg: 'Tplanet was greated.' })
+	const validateNewPlanet = planetSchema.validate(newValue);
+	if (validateNewPlanet.error) {
+		return res
+			.status(400)
+			.json({ msg: validateNewPlanet.error.details[0].message });
+	} else {
+		await db.none(`INSERT INTO planets (name) VALUES ($1)`, name)
+		res.status(201).json({ msg: 'Planet was created' });
+	}
 };
 
-//!UPDATE PLANET
-const getUpdate = (req: Request, res: Response) => {
+// UPDATE PLANET
+const updateById = async (req: Request, res: Response) => {
 	const { id } = req.params;
 	const { name } = req.body;
+	await db.none(`UPDATE planets SET name=$2 WHERE id=$1`,  [id, name])
 
-	planets = planets.map((p) => (p.id === Number(id) ? { ...p, name } : p));
-	console.log(planets);
-
-	res.status(200).json('The name is updated');
+	res.status(200).json({ msg: 'The name was updated' });
 };
 
-//!DELETE PLANET
-const getDelete = (req: Request, res: Response) => {
+//DELETE PLANET
+const deleteById = async (req: Request, res: Response) => {
 	const { id } = req.params;
-	planets = planets.filter((p) => p.id !== Number(id));
 
-	res.status(200).json({ msh: 'The planet was deleted' });
+	await db.none(`DELETE FROM planets WHERE id=$1`, Number(id))
+
+	res.status(200).json({ msg: 'Planet was deleted' });
 };
+// UPLOADE IMAGE FUNCTION
+const createImg = async (req:Request, res:Response) => {
+	console.log(req.file);
+	const { id } = req.params;
+	const filename = req.file?.path;
 
-export { getAll, getUser, getPost, getUpdate, getDelete };
+	if(filename) {
+		db.none(`UPDATE planets SET image=$2 WHERE id=$1`, [id, filename])
+		res.status(201).json({msg: 'Image uploaded successfully'})
+	}else{
+		res.status(400).json({msg: 'Image faild to upload'})
+	}
+}
+
+export { getAll, getOneById, create, updateById, deleteById, createImg };
