@@ -1,11 +1,14 @@
+import * as dotenv from 'dotenv'
 import express
 from 'express';
 import "express-async-errors";
 import morgan from "morgan";
-import {getAll, getUser, getPost, getUpdate, getDelete} from "./controllers/planets.js"
+import {create, deleteById, getAll, getOneById, updateById, } from "./controllers/planets.js"
 
+
+dotenv.config()
 const app = express()
-const port = 5000
+const port = process.env.PORT;
 
 app.use(morgan("dev"));
 app.use(express.json());
@@ -13,13 +16,13 @@ app.use(express.json());
 
 app.get("/api/planets", getAll);
 
-app.get("/api/planets/:id", getUser);
+app.get("/api/planets/:id", getOneById);
 
-app.post("/api/planets", getPost);
+app.post("/api/planets", create);
 
-app.put("/api/planets/:id", getUpdate);
+app.put("/api/planets/:id", updateById);
 
-app.delete("/api/planets/:id", getDelete);
+app.delete("/api/planets/:id", deleteById);
 
 
 app.listen(port, () => {

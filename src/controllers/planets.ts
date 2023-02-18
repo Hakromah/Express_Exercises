@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
-import Joi from "Joi"
-
+import joi from 'joi';
 
 type Planet = {
 	id: number;
@@ -10,79 +9,74 @@ type Planet = {
 type Planets = Planet[];
 
 let planets: Planets = [
-	{ id: 1, name: 'Earth' },
-	{ id: 2, name: 'Mars' },
-	{ id: 3, name: 'Moon' },
+	{
+		id: 1,
+		name: 'Earth',
+	},
+	{
+		id: 2,
+		name: 'Mars',
+	},
+	{
+		id: 3,
+		name: 'Mercury',
+	},
 ];
 
-// app.get('/api/planets', (req:Request, res) => {
-//   res.status(200).json(planets)
-// });
-
-// app.get("/api/planets/:id", (req:Request, res) =>{
-//    const {id} = req:Request.params;
-//    const planet = planets.find(p => p.id === Number(id))
-
-//    res.status(200).json(planet)
-// });
-
-const getAll = (req: Request, res: Response) => {
+const getAll = (req: Request, res:Response) => {
+	console.log(req);
 	res.status(200).json(planets);
 };
 
-//!GET USER
-const getUser = (req: Request, res: Response) => {
+const getOneById = (req: Request, res:Response) => {
 	const { id } = req.params;
+
 	let planet = planets.find((p) => p.id === Number(id));
 	res.status(200).json(planet);
 };
 
-//todo  VALIDATION
+//todo validation with (joi)
 
-const planetSchema = Joi.object({
-   id: Joi.number().integer().required(),
-   name: Joi.string().required()
+const planetSchema = joi.object({
+	id: joi.number().integer().required(),
+	name: joi.string().required(),
 });
 
-//! POST PLANET
-const getPost = (req: Request, res: Response) => {
-	// const {id, name} = req:Request.body;
-	const { name } = req.body; //? create id automatically
-	// let id = planets[planets.length-1].id +1
-	const id = Math.floor(Math.random() * 100);
-	const newPlanet: Planet = { id, name };
+const create = (req: Request, res:Response) => {
+	const { name } = req.body;
+	//let id = planets [planets.length -1] +1 //another way to generate ID
+	let id = Math.floor(Math.random() * 100);
+	const newValue: Planet = { id, name };
 
-
-   const validateNewPlanet = planetSchema.validate(newPlanet);//! validation
-
-   if(validateNewPlanet.error) {
-      return res.status(400).json({msg: validateNewPlanet.error})
-   }else{
-   planets = [...planets, newPlanet];
-   res.status(201).json({ msg: 'Planet was greated.' });
-   }
-
-	// planets = [...planets, newPlanet];
-   // res.status(201).json({ msg: 'Tplanet was greated.' })
+	const validateNewPlanet = planetSchema.validate(newValue);
+	if (validateNewPlanet.error) {
+		return res.status(400).json({ msg: validateNewPlanet.error.details[0].message });
+	} else {
+		planets = [...planets, newValue];
+		res.status(201).json({ msg: 'Planet was created' });
+	}
 };
 
-//!UPDATE PLANET
-const getUpdate = (req: Request, res: Response) => {
+
+
+const updateById = (req: Request, res:Response) => {
 	const { id } = req.params;
 	const { name } = req.body;
-
 	planets = planets.map((p) => (p.id === Number(id) ? { ...p, name } : p));
 	console.log(planets);
 
-	res.status(200).json('The name is updated');
+	res.status(200).json({ msg: 'The name was updated' });
 };
 
-//!DELETE PLANET
-const getDelete = (req: Request, res: Response) => {
+const deleteById = (req: Request, res:Response) => {
 	const { id } = req.params;
-	planets = planets.filter((p) => p.id !== Number(id));
 
-	res.status(200).json({ msh: 'The planet was deleted' });
+	planets = planets.filter((p) => p.id !== Number(id));
+	console.log(planets);
+
+	res.status(200).json({ msg: 'Planet was deleted' });
 };
 
-export { getAll, getUser, getPost, getUpdate, getDelete };
+export {getAll, getOneById, create, updateById, deleteById}
+
+
