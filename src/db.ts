@@ -1,4 +1,3 @@
-import { Request, Response } from 'express';
 import pgPromise from 'pg-promise'
 
 // connection to the pgAdmin database
