@@ -8,21 +8,34 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import pgPromise from 'pg-promise';
-// connection to the pgAdmin database
-const db = pgPromise()('postgres://postgres:postgres@localhost:5432/db_exercise');
-console.log(db);
-//CRETING PLANET TABLE
+const db = pgPromise()('postgres://postgres:postgres@localhost:5432/all_planets');
 const setupDb = () => __awaiter(void 0, void 0, void 0, function* () {
     yield db.none(`
-	DROP TABLE IF EXISTS users;
-	CREATE TABLE users (
-		id SERIAL NOT NULL PRIMARY KEY,
-		username TEXT NOT NULL,
-		password TEXT NOT NULL,
-		token TEXT,
-		image TEXT
-	)`);
-    yield db.none(`INSERT INTO users (username, password) VALUES ('hakromah', 'hakromah')`);
+      DROP TABLE IF EXISTS planets;
+         CREATE TABLE planets (
+            id SERIAL NOT NULL PRIMARY KEY,
+            name TEXT NOT NULL,
+            image TEXT
+         );
+
+      DROP TABLE IF EXISTS users;
+      CREATE TABLE users (
+         id SERIAL NOT NULL PRIMARY KEY,
+         username TEXT NOT NULL,
+         password TEXT NOT NULL,
+         token TEXT
+      )
+   `);
+    yield db.none(`INSERT INTO planets (name) VALUES ('Earth')`);
+    yield db.none(`INSERT INTO planets (name) VALUES ('Mars')`);
+    yield db.none(`INSERT INTO planets (name) VALUES ('Pluto')`);
+    yield db.none(`INSERT INTO planets (name) VALUES ('Mercury')`);
+    yield db.none(`INSERT INTO planets (name) VALUES ('Jupiter')`);
+    yield db.none(`INSERT INTO planets (name) VALUES ('Saturn')`);
+    yield db.none(`INSERT INTO planets (name) VALUES ('Uranus')`);
+    yield db.none(`INSERT INTO planets (name) VALUES ('Neptune')`);
+    yield db.none(`INSERT INTO planets (name) VALUES ('Moon')`);
+    yield db.none(`INSERT INTO users (username, password) VALUES ('final', 'final')`);
 });
 setupDb();
 export { db };

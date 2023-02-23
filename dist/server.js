@@ -1,32 +1,39 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import * as dotenv from 'dotenv';
 import express from 'express';
 import 'express-async-errors';
 import morgan from 'morgan';
-import { logIn, logOut, signUp } from './controllers/users.js';
-import authorize from "./authorize.js";
-import { db } from './db.js';
+import multer from 'multer';
+import "./passport.js";
+import { getAll, getUser, getPost, getUpdate, getDelete, createImage, } from './controllers/planets.js';
+import { logIn, signUp, logOut } from './controllers/users.js';
+import authorize from './authorize.js';
+// UPLOAD FILE TO DATABASE
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, './uploads');
+    },
+    filename: (req, file, cb) => {
+        cb(null, file.originalname);
+    },
+});
+const upload = multer({ storage });
 dotenv.config();
 const app = express();
 const port = process.env.PORT;
+//show the image in the browser
+app.use('/uploads', express.static('uploads'));
+app.use('/static', express.static('uploads'));
 app.use(morgan('dev'));
 app.use(express.json());
-app.get('/api/users', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const users = yield db.many(`SELECT * FROM users`);
-    console.log(users);
-    res.status(200).json(users);
-}));
-app.post('/api/users/signup', signUp);
+app.get('/api/planets', getAll);
+app.get('/api/planets/:id', getUser);
+app.post('/api/planets', getPost);
+app.put('/api/planets/:id', getUpdate);
+app.delete('/api/planets/:id', getDelete);
+app.post('/api/planets/:id/image', authorize, upload.single('image'), createImage);
 app.post('/api/users/login', logIn);
+app.post('/api/users/signup', signUp);
 app.get('/api/users/logout', authorize, logOut);
 app.listen(port, () => {
-    console.log(`Example app listening on port http://localhost:${port}`);
+    console.log(`app listening on port http://localhost:${port}`);
 });

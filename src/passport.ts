@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 import passport from 'passport';
 import passportJWT from 'passport-jwt';
-import { db } from './src/db.js';
+import { db } from './db.js';
 
 dotenv.config();
 const { SECRET } = process.env;
